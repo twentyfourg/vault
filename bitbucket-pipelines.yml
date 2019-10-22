@@ -8,6 +8,5 @@ pipelines:
           name: Install dependencies
           image: node:10-alpine
           script:
-            - npm install
             - npm version patch -m "[skip ci] %s"
             - npm publish --registry https://npm.24g.dev
