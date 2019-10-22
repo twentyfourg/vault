@@ -8,6 +8,7 @@ pipelines:
           name: Deploying to npm.24g.dev
           image: node:10-alpine
           script:
+            - apk --update add git
             - npm version patch -m "[skip ci] %s"
             - npm publish --registry https://npm.24g.dev
             - git push
