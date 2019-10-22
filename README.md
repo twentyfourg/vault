@@ -12,10 +12,12 @@ vault('secret/data/foo')
 
 ## Options
 Method can take an optional options object for advanaced configuration.
+
 * `vaultAddress`: Vault endpoint to use. Defaults to the `VAULT_ADDR` environment variable.
 * `vaultTokenPath`: Location of the Vault session token on the filesystem. Defaults to the `VAULT_TOKEN_PATH` environment variable or `~/.vault-token` if not set. This option is only needed when running on a server.
 * `vaultRole`: What [Vault role](https://www.vaultproject.io/api/auth/aws/index.html#create-role) to attempt to authenticate to. Defaults `VAULT_ROLE` environments variable. This option is only needed when running on Lambda.
 * `awsScopedCredentialsRegion`: Which region the [STS signature is scoped to](https://docs.aws.amazon.com/general/latest/gr/sigv4_changes.html). Defaults to the `VAULT_AWS_SCOPED_CREDENTIALS_REGION` environment variable or `us-east-1` if not set. This option is only needed when running on Lambda.
+
 
 ```Javascript
 const vault = require('@24g/vault');
@@ -28,6 +30,7 @@ vault('secret/data/foo', options)
   .then(console.log)
   .catch(console.log)
 ```
+
 ---
 
 ## Differences when running on a server vs Lambda
