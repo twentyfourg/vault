@@ -1,0 +1,23 @@
+{
+  "name": "@24g/vault",
+  "version": "1.0.1",
+  "description": "Module for interacting with Vault",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Brian Anstett",
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.553.0",
+    "aws4": "^1.8.0",
+    "debug": "^4.1.1",
+    "node-vault": "^0.9.11",
+    "request": "^2.88.0",
+    "validator": "^11.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://bitbucket.org/24g/24g-vault/src"
+  }
+}
