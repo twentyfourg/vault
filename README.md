@@ -2,7 +2,7 @@
 Simple module for accessing Vault secrets. Includes support for Lambda and containers.
 
 ```
-npm install --save --registry https://vault.24g.dev @24g/vault
+npm install --save --registry https://npm.24g.dev @24g/vault
 ```
 
 ```Javascript
