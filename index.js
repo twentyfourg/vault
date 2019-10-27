@@ -47,7 +47,7 @@ function getAwsRequestUrl(region){
 module.exports = async function getSecret(secretPath, options = {}) {
   // To be backwards compatible, we still use the KEY_NAME env var.
   // When secret manager is fully deprecated, we should swap this to SECRET_PATH
-  if (!secretPath) secretPath = process.env.SECRET_PATH || process.env.KEY_NAME;
+  if (!secretPath) secretPath = process.env.VAULT_SECRET_PATH || process.env.KEY_NAME;
   // Check if secret exists in cache
   if (secretValues[secretPath]) return secretValues[secretPath];
 
