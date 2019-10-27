@@ -97,7 +97,7 @@ module.exports = async function getSecret(secretPath, options = {}) {
   // Create Vault client
   const vaultOptions = {
     apiVersion: 'v1',
-    endpoint: vaultAddress,
+    endpoint: vaultAddress+":"+port,
     token,
   };
   const vault = Vault(vaultOptions);
