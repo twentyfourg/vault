@@ -41,6 +41,7 @@ function getAwsRequestUrl(region){
  * @param {Object} [options] Options object
  * @param {String} [options.vaultAddress] Vault endpoint to use. Defaults to VAULT_ADDR environment variable.
  * @param {String} [options.vaultTokenPath] Location of Vault session token on the file system. Defaults to VAULT_TOKEN_PATH environment variable
+ * @param {Boolean} [options.bypassCache] Make a new API call for secrets instead of using cache.
  * @param {String} [options.vaultRole] Required if running in Lambda. What Vault role attempt to auth to.
  * @param {String} [options.scopedCredentialsRegion] Which region the STS signature is scoped to.
  */
@@ -48,15 +49,19 @@ module.exports = async function getSecret(secretPath, options = {}) {
   // To be backwards compatible, we still use the KEY_NAME env var.
   // When secret manager is fully deprecated, we should swap this to SECRET_PATH
   if (!secretPath) secretPath = process.env.SECRET_PATH || process.env.KEY_NAME;
+
+  // Default bypassCache to false
+  const bypassCache = options.bypassCache || false;
+  
   // Check if secret exists in cache
-  if (secretValues[secretPath]) return secretValues[secretPath];
+  if (secretValues[secretPath] && bypassCache == false) return secretValues[secretPath];
 
   // Default to environment variables
   const vaultAddress = options.vaultAddress || process.env.VAULT_ADDR; // Address for the Vault API.
   const vaultTokenPath = options.vaultTokenPath || process.env.VAULT_TOKEN_PATH || os.homedir() + '/.vault-token'; // Required only for containers. Where on the FS the vault token lives.
   const vaultRole = options.vaultRole || process.env.VAULT_ROLE; // Required only for Lambda. What Vault role to auth to.
   const vaultPort = 443;  // Port of the Vault API.
-  const scopedCredentialsRegion = options.ScopedCredentialsRegion || process.env.VAULT_AWS_SCOPED_CREDENTIALS_REGION || 'us-east-1';
+  const scopedCredentialsRegion = options.awsScopedCredentialsRegion || process.env.VAULT_AWS_SCOPED_CREDENTIALS_REGION || 'us-east-1';
   let token,vaultClient;
 
   // Determine is being called in Lambda or container.
@@ -97,7 +102,7 @@ module.exports = async function getSecret(secretPath, options = {}) {
   // Create Vault client
   const vaultOptions = {
     apiVersion: 'v1',
-    endpoint: vaultAddress+":"+port,
+    endpoint: vaultAddress+":"+vaultPort,
     token,
   };
   const vault = Vault(vaultOptions);
