@@ -15,10 +15,9 @@ vault('secret/data/foo')
 ---
 
 ## Options
-Method can take an optional options object for advanaced configuration.
 
 * `vaultAddress`: Vault endpoint to use. Defaults to the `VAULT_ADDR` environment variable.
-* `vaultTokenPath`: Location of the Vault session token on the filesystem. Defaults to the `VAULT_TOKEN_PATH` environment variable or `~/.vault-token` if not set. This option is only needed when running on a server.
+* `vaultTokenPath`: Location of the Vault session token on the filesystem. Defaults to the `VAULT_TOKEN_PATH` environment variable or `~/.vault-token` if not set. This option is only needed when running on a server/container.
 * `vaultRole`: What [Vault role](https://www.vaultproject.io/api/auth/aws/index.html#create-role) to attempt to authenticate to. Defaults to the `VAULT_ROLE` environments variable. This option is only needed when running on Lambda.
 * `awsScopedCredentialsRegion`: Which region the [STS signature is scoped to](https://docs.aws.amazon.com/general/latest/gr/sigv4_changes.html). Defaults to the `VAULT_AWS_SCOPED_CREDENTIALS_REGION` environment variable or `us-east-1` if not set. This option is only needed when running on Lambda.
 
@@ -26,8 +25,7 @@ Method can take an optional options object for advanaced configuration.
 ```Javascript
 const vault = require('@24g/vault');
 const options= {
-  vaultAddress:'https://vault.24g.dev',
-  vaultRole: 'g-1234-developer-role'
+  vaultAddress:'https://vault.24g.dev'
 };
 
 vault('secret/data/foo', options)
@@ -37,19 +35,79 @@ vault('secret/data/foo', options)
 
 ---
 
+## Vault Login for Local Development
+Make sure you have the [Vault binaries](https://www.vaultproject.io/downloads.html) installed locally on your machine. Once installed, configure the Vault CLI to use 24G's vault server ([https://vault.24g.dev](https://vault.24g.dev)). This can be down by setting the `VAULT_ADDR` environment variable. (You can use files like `~/.bashrc` to automatically set environment variables on login).
+
+Log into Vault using the `vault login` command.
+* `-method`: What auth method to use. Set this to `oidc`.
+* `role`: The preconfigure auth method role. Use `google`.
+
+```bash
+export VAULT_ADDR=https://vault.24g.dev
+vault login -method oidc role=google
+```
+---
+## Using the SECRET_PATH Environment Variable
+This module will default to using the `SECRET_PATH` environment variable as the secret path if no other path is explicitly provided when invoked.
+
+```javascript
+process.env.SECRET_PATH = 'secret/data/foo';
+vault()
+  .then(console.log)
+  .catch(console.log)
+```
+---
+## Word on caching
+This module caches the retrieved secrets in memory. This is down to limit the response latency caused by an API call to just the *first* retrieval of the secret. This helps performance but can result in stale secrets depending on your use case. If you wish to bypass the cache and make a fresh API request, use the `bypassCache` option.
+
+```Javascript
+await vault('secret/data/foo'); // 300ms latency
+
+await vault('secret/data/foo'); // 4ms latency
+
+await vault('secret/data/foo', {bypassCache: true}); // 300ms latency
+
+```
+---
+
 ## Differences when running on a server vs Lambda
 When running on a server, it is assumed you already have a [Auth Agent](https://www.vaultproject.io/docs/agent/) for your [authorization method](https://www.vaultproject.io/docs/auth/index.html) configured and are logged in (already retrieved a session token). When running on Kubernetes, our [single_server_standard](https://bitbucket.org/24g/24g-architecture/src/master/Kubernetes/helm/scaffold/single_server_standard/) scaffold comes preconfigured with a auth agent sidecar to retrieve and renew a session token. In that circumstance, this modules simply acts as an API wrapper.
 
 The following options or environment variables must be set when running on a server/container.
 * `options.vaultAddress` || `VAULT_ADDR`
-* `options.vaultTokenPath` || `VAULT_TOKEN_PATH`
+* `options.vaultTokenPath` || `VAULT_TOKEN_PATH` || Will default to `~/.vault-token`
+
+```Javascript
+const vault = require('@24g/vault');
+const options= {
+  vaultAddress:'https://vault.24g.dev'
+};
+
+vault('secret/data/foo', options)
+  .then(console.log)
+  .catch(console.log)
+```
 
 When running in Lambda, this module will [authenticate to Vault](https://www.vaultproject.io/docs/auth/aws.html) and then make the necessary API requests to retrieve the desired secret. The secret values are cached for the duration of the function invokation. 
 
-The following opions or environment variables must be set.
+The following opions or environment variables must be set when running in a Lambda function.
 * `options.vaultAddress` || `VAULT_ADDR`
 * `options.vaultRole` || `VAULT_ROLE`
-* `options.ScopedCredentialsRegion` || `VAULT_AWS_SCOPED_CREDENTIALS_REGION`
+* `options.awsScopedCredentialsRegion` || `VAULT_AWS_SCOPED_CREDENTIALS_REGION` || Will default to `us-east-1`
+
+```Javascript
+const vault = require('@24g/vault');
+const options= {
+  vaultAddress:'https://vault.24g.dev',
+  vaultRole: 'g-1234-fooBar-aws-role',
+  awsScopedCredentialsRegion: 'us-east-1'
+};
+
+vault('secret/data/foo', options)
+  .then(console.log)
+  .catch(console.log)
+```
+---
 
 ## Debug
 This module uses [debug](https://www.npmjs.com/package/debug) to log advanced information. Set the environment variable `DEBUG` to `vault:*` in order to view verbose logs.
@@ -62,3 +120,9 @@ Error: Error while trying to authenticate to vault server.
     at process._tickCallback (internal/process/next_tick.js:68:7)
 
 ```
+---
+
+## References
+* [https://vault.24g.dev](https://vault.24g.dev)
+* [Official Vault docs](https://www.vaultproject.io/docs/)
+* [24G docs on Vault](https://www.notion.so/24g/Vault-931889bba0314daf9b77218d64a882f1#2e1811ae5441452790f8a29fc389d5ed)
