@@ -126,4 +126,4 @@ Error: Error while trying to authenticate to vault server.
 ## References
 * [https://vault.24g.dev](https://vault.24g.dev)
 * [Official Vault docs](https://www.vaultproject.io/docs/)
-* [24G docs on Vault](https://www.notion.so/24g/Vault-931889bba0314daf9b77218d64a882f1#2e1811ae5441452790f8a29fc389d5ed)
+* [24G docs on Vault](https://www.notion.so/24g/Vault-931889bba0314daf9b77218d64a882f1)
