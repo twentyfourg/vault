@@ -59,7 +59,7 @@ vault()
 ```
 ---
 ## Word on caching
-This module caches the retrieved secrets in memory. This is down to limit the response latency caused by an API call to just the *first* retrieval of the secret. This helps performance but can result in stale secrets depending on your use case. If you wish to bypass the cache and make a fresh API request, use the `bypassCache` option.
+This module caches the retrieved secrets in memory. This is done to limit the response latency caused by an API call to just the *first* retrieval of the secret. This helps performance but can result in stale secrets depending on your use case. If you wish to bypass the cache and make a fresh API request, use the `bypassCache` option.
 
 ```Javascript
 await vault('secret/data/foo'); // 300ms latency
