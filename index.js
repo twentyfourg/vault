@@ -110,7 +110,11 @@ module.exports = async function getSecret(secretPath, options = {}) {
   // Attempt to read secret from Valut. Throw error otherwise.
   try{
     const secret = await vault.read(secretPath);
-    secretValues[secretPath] = secret.data.data;
+    /**
+     * KV engine v2 returns data in following format data :{data:{},metadata:{}}.
+     * KV engine v1 returns data in the following format data:{}
+     */
+    secretValues[secretPath] = secret.data || secret.data.data; // check v1 then v2
     return secretValues[secretPath];
   }catch(vaultError){
     debug('vault:apiRequest')(vaultError);
