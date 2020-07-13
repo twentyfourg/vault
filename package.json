@@ -19,5 +19,10 @@
   "repository": {
     "type": "git",
     "url": "https://bitbucket.org/24g/24g-vault/src"
+  },
+  "devDependencies": {
+    "eslint": "^7.4.0",
+    "eslint-config-airbnb-base": "^14.2.0",
+    "eslint-plugin-import": "^2.22.0"
   }
 }
