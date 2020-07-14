@@ -2,11 +2,11 @@
  * @author Brian Anstett
  */
 
-const Vault = require('node-vault');
 const fs = require('fs');
 const debug = require('debug');
 const os = require('os');
-const VaultAwsAuth = require('./libs/vaultAwsAuth');
+const Vault = require('./lib/vaultApi');
+const VaultAwsAuth = require('./lib/vaultAwsAuth');
 
 // For caching
 const secretValues = {};
@@ -106,16 +106,11 @@ module.exports = async function getSecret(secretPath, options = {}) {
     endpoint: `${vaultAddress}:${vaultPort}`,
     token,
   };
-  const vault = Vault(vaultOptions);
+  const vault = new Vault(vaultOptions);
 
-  // Attempt to read secret from Valut. Throw error otherwise.
+  // Attempt to read secret from Vault. Throw error otherwise.
   try {
-    const secret = await vault.read(path);
-    /**
-     * KV engine v2 returns data in following format data :{data:{},metadata:{}}.
-     * KV engine v1 returns data in the following format data:{}
-     */
-    secretValues[path] = secret.data || secret.data.data; // check v1 then v2
+    secretValues[path] = await vault.read(path);
     return secretValues[path];
   } catch (vaultError) {
     debug('vault:apiRequest')(vaultError);

@@ -12,8 +12,8 @@
   "dependencies": {
     "aws-sdk": "^2.553.0",
     "aws4": "^1.8.0",
+    "axios": "^0.19.2",
     "debug": "^4.1.1",
-    "node-vault": "^0.9.11",
     "request": "^2.88.0",
     "validator": "^11.1.0"
   },
