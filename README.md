@@ -20,6 +20,7 @@ vault('secret/data/foo')
 * `vaultTokenPath`: Location of the Vault session token on the filesystem. Defaults to the `VAULT_TOKEN_PATH` environment variable or `~/.vault-token` if not set. This option is only needed when running on a server/container.
 * `bypassCache`: Make a new API request for secrets instead of pulling from cache. Defaults to `false`.
 * `vaultRole`: What [Vault role](https://www.vaultproject.io/api/auth/aws/index.html#create-role) to attempt to authenticate to. Defaults to the `VAULT_ROLE` environments variable. This option is only needed when running on Lambda.
+* `vaultToken`: Existing Vault auth token. Can also be set using the `VAULT_TOKEN` environment variable. If left blank, this package attempts to generate a new Vault auth token for you.
 * `awsScopedCredentialsRegion`: Which region the [STS signature is scoped to](https://docs.aws.amazon.com/general/latest/gr/sigv4_changes.html). Defaults to the `VAULT_AWS_SCOPED_CREDENTIALS_REGION` environment variable or `us-east-1` if not set. This option is only needed when running on Lambda.
 
 
