@@ -72,8 +72,8 @@ module.exports = async function getSecret(secretPath, options = {}) {
     // Determine if being called in Lambda or container.
     if (process.env.AWS_EXECUTION_ENV) {
       // Running in Lambda. Make necessary assumptions.
-      if (!vaultRole) return new Error('Requires either options.vaultRole or VAULT_ROLE environment variable.');
-      if (!scopedCredentialsRegion) return new Error('Requires either options.scopedCredentialsRegion or VAULT_AWS_SCOPED_CREDENTIALS_REGION environment variable.');
+      if (!vaultRole) throw new Error('Requires either options.vaultRole or VAULT_ROLE environment variable.');
+      if (!scopedCredentialsRegion) throw new Error('Requires either options.scopedCredentialsRegion or VAULT_AWS_SCOPED_CREDENTIALS_REGION environment variable.');
       try {
         vaultClient = new VaultAwsAuth({
           host: vaultAddress,
