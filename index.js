@@ -3,13 +3,12 @@
  */
 
 const fs = require('fs');
-const debug = require('debug');
 const os = require('os');
 const Vault = require('./lib/vaultApi');
 const VaultAwsAuth = require('./lib/vaultAwsAuth');
 
 // For caching
-const secretValues = {};
+let secretCache = {};
 
 /**
  * fs promise is still experimental. fsReadFile is a promise wrapper around fs.readFile.
@@ -30,10 +29,7 @@ async function fsReadFile(...args) {
  * @returns {String} AWS STS region endpoint
  */
 function getAwsRequestUrl(region) {
-  const awsRegion = region || process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION;
-
-  if (!awsRegion) throw new Error(`Valid region is required to determine AWS Request URL. Got ${awsRegion}.`);
-  return `https://sts.${awsRegion}.amazonaws.com`;
+  return `https://sts.${region}.amazonaws.com`;
 }
 
 /**
@@ -56,7 +52,7 @@ module.exports = async function getSecret(secretPath, options = {}) {
   const bypassCache = options.bypassCache || false;
 
   // Check if secret exists in cache
-  if (secretValues[path] && bypassCache === false) return secretValues[path];
+  if (Object.keys(secretCache).length > 0 && bypassCache === false) return secretCache;
 
   // Default to environment variables
   const vaultAddress = options.vaultAddress || process.env.VAULT_ADDR; // Address for the Vault API.
@@ -65,6 +61,7 @@ module.exports = async function getSecret(secretPath, options = {}) {
   const vaultPort = 443; // Port of the Vault API.
   let token = options.vaultToken || process.env.VAULT_TOKEN; // Use can pass in existing Vault token via options or environment variable.
   const scopedCredentialsRegion = options.awsScopedCredentialsRegion || process.env.VAULT_AWS_SCOPED_CREDENTIALS_REGION || 'us-east-1';
+  const region = options.region || process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || 'us-east-1';
   let vaultClient;
 
   // If the user passed in an existing Vault token, you that. Don't go through the process of generating one
@@ -73,17 +70,15 @@ module.exports = async function getSecret(secretPath, options = {}) {
     if (process.env.AWS_EXECUTION_ENV) {
       // Running in Lambda. Make necessary assumptions.
       if (!vaultRole) throw new Error('Requires either options.vaultRole or VAULT_ROLE environment variable.');
-      if (!scopedCredentialsRegion) throw new Error('Requires either options.scopedCredentialsRegion or VAULT_AWS_SCOPED_CREDENTIALS_REGION environment variable.');
       try {
         vaultClient = new VaultAwsAuth({
           host: vaultAddress,
           vaultAppName: vaultRole,
           port: vaultPort,
           region: scopedCredentialsRegion,
-          awsRequestUrl: getAwsRequestUrl(),
+          awsRequestUrl: getAwsRequestUrl(region),
         });
       } catch (vaultConstructorError) {
-        debug('vault:VaultAwsAuth:constructor')(vaultConstructorError);
         throw vaultConstructorError;
       }
 
@@ -91,8 +86,7 @@ module.exports = async function getSecret(secretPath, options = {}) {
         const awsAuthResponse = await vaultClient.authenticate();
         token = awsAuthResponse.auth.client_token;
       } catch (awsAuthError) {
-        debug('vault:VaultAwsAuth:authenticate')(awsAuthError);
-        throw new Error('Error while trying to authenticate to vault server.');
+        throw awsAuthError;
       }
     } else {
       // Assume running in container
@@ -115,10 +109,20 @@ module.exports = async function getSecret(secretPath, options = {}) {
 
   // Attempt to read secret from Vault. Throw error otherwise.
   try {
-    secretValues[path] = await vault.read(path);
-    return secretValues[path];
+    // Spit the secret by comma. Try to read all secrets. If one secret has a problem, the entire read operation fails.
+    // Merge the secrets into one secret. Throw error if there are any collisions.
+    const secrets = path.split(",")
+    const secretValues = await Promise.all(secrets.map(secret => vault.read(secret)))
+    const seceretKeys = secretValues.map(secretValue => { return Object.keys(secretValue) }).flat();
+
+    // https://stackoverflow.com/questions/9229645/remove-duplicate-values-from-js-array
+    const secretUniqueKeys = [...new Set(seceretKeys)];
+    if (seceretKeys.length != secretUniqueKeys.length) throw new Error("There was a collision while trying to merge your secrets into one. \nMake sure you don't have duplicates between your secrets.")
+    const mergedSecret = Object.assign(...secretValues);
+    secretCache = mergedSecret;
+    return mergedSecret;
   } catch (vaultError) {
-    debug('vault:apiRequest')(vaultError);
+    vaultError.message = `Request to Vault server: ${vaultError.message}`
     throw vaultError.stack;
   }
 };

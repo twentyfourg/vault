@@ -10,11 +10,9 @@
   "author": "Brian Anstett",
   "license": "ISC",
   "dependencies": {
-    "aws-sdk": "^2.553.0",
+    "@aws-sdk/credential-provider-node": "^3.3.0",
     "aws4": "^1.8.0",
-    "axios": "^0.19.2",
-    "debug": "^4.1.1",
-    "request": "^2.88.0",
+    "axios": "^0.21.1",
     "validator": "^11.1.0"
   },
   "repository": {
