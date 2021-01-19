@@ -1,6 +1,8 @@
 # @24g/vault
 Simple module for accessing Vault secrets. Currently includes support for Lambda and containers.
 
+## Usage
+
 ```
 npm install --save --registry https://npm.24g.dev @24g/vault
 ```
@@ -12,7 +14,6 @@ vault('secret/data/foo')
   .then(console.log)
   .catch(console.log)
 ```
----
 
 ## Options
 
@@ -35,7 +36,16 @@ vault('secret/data/foo', options)
   .catch(console.log)
 ```
 
----
+## Multiple secrets
+This module supports passing a comma separated list of secrets. This module will retrieve all the secrets in the list and return one objects with all the secrets combined. If one or more secrets in the list fail to be retrieved, an error will be thrown. If there are any collisions during the merge, an error will be thrown.
+
+```
+vault('kv/foo/bar,kv/foo/bar1')
+  .then(console.log)
+  .catch(console.log);
+
+{ foo: 'bar', bar: 'asdf', baz: 'asdf' }
+```
 
 ## Vault Login for Local Development
 Make sure you have the [Vault binaries](https://www.vaultproject.io/downloads.html) installed locally on your machine. Once installed, configure the Vault CLI to use 24G's vault server ([https://vault.24g.dev](https://vault.24g.dev)). This can be down by setting the `VAULT_ADDR` environment variable. (You can use files like `~/.bashrc` to automatically set environment variables on login).
@@ -48,7 +58,7 @@ Log into Vault using the `vault login` command.
 export VAULT_ADDR=https://vault.24g.dev
 vault login -method oidc role=google
 ```
----
+
 ## Using the SECRET_PATH Environment Variable
 This module will default to using the `SECRET_PATH` environment variable as the secret path if no other path is explicitly provided when invoked.
 
@@ -58,7 +68,7 @@ vault()
   .then(console.log)
   .catch(console.log)
 ```
----
+
 ## Word on caching
 This module caches the retrieved secrets in memory. This is done to limit the response latency caused by an API call to just the *first* retrieval of the secret. This helps performance but can result in stale secrets depending on your use case. If you wish to bypass the cache and make a fresh API request, use the `bypassCache` option.
 
@@ -70,7 +80,6 @@ await vault('secret/data/foo'); // 4ms latency
 await vault('secret/data/foo', {bypassCache: true}); // 300ms latency
 
 ```
----
 
 ## Differences when running on a server vs Lambda
 When running on a server, it is assumed you already have a [Auth Agent](https://www.vaultproject.io/docs/agent/) for your [authorization method](https://www.vaultproject.io/docs/auth/index.html) configured and are logged in (already retrieved a session token). When running on Kubernetes, our [single_server_standard](https://bitbucket.org/24g/24g-architecture/src/master/Kubernetes/helm/scaffold/single_server_standard/) scaffold comes preconfigured with a auth agent sidecar to retrieve and renew a session token. In that circumstance, this modules simply acts as an API wrapper.
@@ -109,20 +118,6 @@ vault('secret/data/foo', options)
   .then(console.log)
   .catch(console.log)
 ```
----
-
-## Debug
-This module uses [debug](https://www.npmjs.com/package/debug) to log advanced information. Set the environment variable `DEBUG` to `vault:*` in order to view verbose logs.
-
-```Bash
-DEBUG=vault:* node index.js
-vault:vaultAwsAuth:authenticate { errors: [ 'entry for role g-1234-developer-role not found' ] } +0ms
-Error: Error while trying to authenticate to vault server.
-    at getSecret (/home/briananstett/work/@24g-vault/index.js:86:13)
-    at process._tickCallback (internal/process/next_tick.js:68:7)
-
-```
----
 
 ## References
 * [https://vault.24g.dev](https://vault.24g.dev)
