@@ -70,24 +70,15 @@ module.exports = async function getSecret(secretPath, options = {}) {
     if (process.env.AWS_EXECUTION_ENV) {
       // Running in Lambda. Make necessary assumptions.
       if (!vaultRole) throw new Error('Requires either options.vaultRole or VAULT_ROLE environment variable.');
-      try {
-        vaultClient = new VaultAwsAuth({
-          host: vaultAddress,
-          vaultAppName: vaultRole,
-          port: vaultPort,
-          region: scopedCredentialsRegion,
-          awsRequestUrl: getAwsRequestUrl(region),
-        });
-      } catch (vaultConstructorError) {
-        throw vaultConstructorError;
-      }
-
-      try {
-        const awsAuthResponse = await vaultClient.authenticate();
-        token = awsAuthResponse.auth.client_token;
-      } catch (awsAuthError) {
-        throw awsAuthError;
-      }
+      vaultClient = new VaultAwsAuth({
+        host: vaultAddress,
+        vaultAppName: vaultRole,
+        port: vaultPort,
+        region: scopedCredentialsRegion,
+        awsRequestUrl: getAwsRequestUrl(region),
+      });
+      const awsAuthResponse = await vaultClient.authenticate();
+      token = awsAuthResponse.auth.client_token;
     } else {
       // Assume running in container
       // Attempt to read Vault session token. Throw error otherwise.
@@ -111,18 +102,18 @@ module.exports = async function getSecret(secretPath, options = {}) {
   try {
     // Spit the secret by comma. Try to read all secrets. If one secret has a problem, the entire read operation fails.
     // Merge the secrets into one secret. Throw error if there are any collisions.
-    const secrets = path.split(",")
-    const secretValues = await Promise.all(secrets.map(secret => vault.read(secret)))
-    const seceretKeys = secretValues.map(secretValue => { return Object.keys(secretValue) }).flat();
+    const secrets = path.split(',');
+    const secretValues = await Promise.all(secrets.map((secret) => vault.read(secret)));
+    const seceretKeys = secretValues.map((secretValue) => Object.keys(secretValue)).flat();
 
     // https://stackoverflow.com/questions/9229645/remove-duplicate-values-from-js-array
     const secretUniqueKeys = [...new Set(seceretKeys)];
-    if (seceretKeys.length != secretUniqueKeys.length) throw new Error("There was a collision while trying to merge your secrets into one. \nMake sure you don't have duplicates between your secrets.")
+    if (seceretKeys.length !== secretUniqueKeys.length) throw new Error("There was a collision while trying to merge your secrets into one. \nMake sure you don't have duplicates between your secrets.");
     const mergedSecret = Object.assign(...secretValues);
     secretCache = mergedSecret;
     return mergedSecret;
   } catch (vaultError) {
-    vaultError.message = `Request to Vault server: ${vaultError.message}`
+    vaultError.message = `Request to Vault server: ${vaultError.message}`;
     throw vaultError.stack;
   }
 };
