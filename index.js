@@ -45,8 +45,10 @@ function getAwsRequestUrl(region) {
 module.exports = async function getSecret(secretPath, options = {}) {
   // To be backwards compatible, we still use the KEY_NAME env var.
   // When secret manager is fully deprecated, we should swap this to SECRET_PATH
-  let path = secretPath;
-  if (!path) path = process.env.SECRET_PATH || process.env.KEY_NAME;
+  const path = secretPath || process.env.SECRET_PATH || process.env.KEY_NAME;
+
+  // No secret was passed. No SECRET_PATH || KEY_NAME environment variable set.
+  if (!path) return {};
 
   // Default bypassCache to false
   const bypassCache = options.bypassCache || false;

@@ -6,7 +6,7 @@ pipelines:
           caches:
             - node
           name: Deploying to npm.24g.dev
-          image: node:10-alpine
+          image: node:12-alpine
           script:
             - npm install 
             - npm run lint
