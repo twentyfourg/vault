@@ -69,7 +69,7 @@ module.exports = async function getSecret(secretPath, options = {}) {
   // If the user passed in an existing Vault token, you that. Don't go through the process of generating one
   if (token == null) {
     // Determine if being called in Lambda or container.
-    if (process.env.AWS_EXECUTION_ENV) {
+    if (process.env.AWS_LAMBDA_FUNCTION_NAME) {
       // Running in Lambda. Make necessary assumptions.
       if (!vaultRole) throw new Error('Requires either options.vaultRole or VAULT_ROLE environment variable.');
       vaultClient = new VaultAwsAuth({
